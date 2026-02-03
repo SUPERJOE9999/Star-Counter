@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Name Counter & Star Ranker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .loading-spinner {
+            font-size: 3em;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .upload-btn:active {
+            transform: translateY(0);
+        }
+
+        .file-name {
+            margin-top: 15px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .name-list {
+            list-style: none;
+        }
+
+        .name-item {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid #667eea;
+        }
+
+        .name-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .name-item.rank-1 {
+            border-left-color: #FFD700;
+            background: linear-gradient(to right, #fff9e6, white);
+        }
+
+        .name-item.rank-2 {
+            border-left-color: #C0C0C0;
+            background: linear-gradient(to right, #f5f5f5, white);
+        }
+
+        .name-item.rank-3 {
+            border-left-color: #CD7F32;
+            background: linear-gradient(to right, #fff3e6, white);
+        }
+
+        .name-info {
+            flex-grow: 1;
+        }
+
+        .rank {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 20px;
+            min-width: 40px;
+        }
+
+        .rank-1 .rank {
+            color: #FFD700;
+        }
+
+        .rank-2 .rank {
+            color: #C0C0C0;
+        }
+
+        .rank-3 .rank {
+            color: #CD7F32;
+        }
+
+        .name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stars {
+            font-size: 1.5em;
+            color: #FFD700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .star-count {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-left: 10px;
+        }
+
+        .reset-btn {
+            display: block;
+            margin: 30px auto 0;
+            background: #ff6b6b;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .name-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .stars {
+                margin-left: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⭐ Name Counter & Star Ranker ⭐</h1>
+        
+        <div class="upload-section" id="loadingSection">
+            <div class="loading-spinner">🔄</div>
+            <p style="margin-top: 15px; font-size: 1.2em; color: #667eea;">Loading data from Google Sheets...</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalNames">0</span>
+                    <span class="stat-label">Unique Names</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="totalRows">0</span>
+                    <span class="stat-label">Total Rows</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="topStars">0</span>
+                    <span class="stat-label">Most Stars</span>
+                </div>
+            </div>
+
+            <ul class="name-list" id="nameList"></ul>
+
+            <button class="reset-btn" onclick="resetApp()">🔄 Upload New File</button>
+        </div>
+    </div>
+
+    <script>
+        // Google Sheets configuration - Using original sheet ID for JSONP
+        const SHEET_ID = '1K4t3ER3aP9a-1JS0az8JiMfKVNa9YgnY9JmwGaasiH4';
+
+        const loadingSection = document.getElementById('loadingSection');
+        const results = document.getElementById('results');
+        const nameList = document.getElementById('nameList');
+        const totalNamesEl = document.getElementById('totalNames');
+        const totalRowsEl = document.getElementById('totalRows');
+        const topStarsEl = document.getElementById('topStars');
+
+        // Load data on page load
+        window.addEventListener('DOMContentLoaded', loadGoogleSheetData);
+
+        function loadGoogleSheetData() {
+            // Google Sheets returns JSONP with a specific prefix, we need to handle it differently
+            const script = document.createElement('script');
+            
+            // Google uses a fixed callback name in their response
+            window.google = window.google || {};
+            window.google.visualization = window.google.visualization || {};
+            window.google.visualization.Query = window.google.visualization.Query || {};
+            window.google.visualization.Query.setResponse = function(response) {
+                try {
+                    if (response.table) {
+                        const rows = response.table.rows.map(row => 
+                            row.c.map(cell => cell ? (cell.v || '') : '')
+                        );
+                        processData(rows);
+                    } else {
+                        showError('No data found in the sheet.');
+                    }
+                } catch (error) {
+                    console.error('Parse error:', error);
+                    showError('Error parsing sheet data: ' + error.message);
+                } finally {
+                    // Cleanup
+                    if (script.parentNode) {
+                        document.body.removeChild(script);
+                    }
+                }
+            };
+            
+            // Build URL - the responseHandler parameter tells Google what callback to use
+            script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&tq&gid=0`;
+            script.onerror = function() {
+                showError('Failed to load Google Sheets. Make sure the sheet is shared as "Anyone with the link can view".');
+            };
+            
+            document.body.appendChild(script);
+        }
+
+        function processData(data) {
+            // Count names from column A (index 0)
+            const nameCounts = {};
+            let totalRows = 0;
+
+            // Skip header row (index 0) and process data
+            data.slice(1).forEach((row) => {
+                // Skip empty rows
+                if (row && row[0]) {
+                    const name = String(row[0]).trim().toUpperCase();
+                    
+                    // Only count non-empty names
+                    if (name) {
+                        nameCounts[name] = (nameCounts[name] || 0) + 1;
+                        totalRows++;
+                    }
+                }
+            });
+
+            // Convert to array and sort by count (descending)
+            const sortedNames = Object.entries(nameCounts)
+                .sort((a, b) => b[1] - a[1]);
+
+            displayResults(sortedNames, totalRows);
+        }
+
+        function displayResults(sortedNames, totalRows) {
+            if (sortedNames.length === 0) {
+                showError('No names found in column A of the Google Sheet.');
+                return;
+            }
+
+            // Hide loading section
+            loadingSection.style.display = 'none';
+
+            // Update stats
+            totalNamesEl.textContent = sortedNames.length;
+            totalRowsEl.textContent = totalRows;
+            topStarsEl.textContent = sortedNames[0][1];
+
+            // Clear previous results
+            nameList.innerHTML = '';
+
+            // Display each name with stars
+            sortedNames.forEach(([name, count], index) => {
+                const li = document.createElement('li');
+                li.className = 'name-item';
+                
+                // Add special class for top 3
+                if (index === 0) li.classList.add('rank-1');
+                else if (index === 1) li.classList.add('rank-2');
+                else if (index === 2) li.classList.add('rank-3');
+
+                const stars = '⭐'.repeat(Math.min(count, 10)); // Max 10 visual stars
+                const extraStars = count > 10 ? ` +${count - 10}` : '';
+
+                li.innerHTML = `
+                    <span class="rank">#${index + 1}</span>
+                    <div class="name-info">
+                        <div class="name">${name}</div>
+                    </div>
+                    <div class="stars">
+                        ${stars}<span class="star-count">${count}</span>
+                    </div>
+                `;
+
+                nameList.appendChild(li);
+            });
+
+            // Show results
+            results.classList.add('active');
+        }
+
+        function showError(message) {
+            loadingSection.innerHTML = `
+                <div class="error" style="background: #ff6b6b; color: white; padding: 20px; border-radius: 10px;">
+                    <strong>${message}</strong><br><br>
+                    <strong>Setup Instructions:</strong><br>
+                    1. Open your Google Sheet<br>
+                    2. Go to File → Share → Publish to web<br>
+                    3. Choose "Sheet1" and "Comma-separated values (.csv)"<br>
+                    4. Click "Publish"<br>
+                    5. Copy the published URL and replace SHEET_URL in the code
+                </div>
+            `;
+        }
+
+        function resetApp() {
+            loadingSection.style.display = 'block';
+            loadingSection.innerHTML = `
+                <div class="loading-spinner">🔄</div>
+                <p style="margin-top: 15px; font-size: 1.2em; color: #667eea;">Reloading data from Google Sheets...</p>
+            `;
+            results.classList.remove('active');
+            nameList.innerHTML = '';
+            
+            setTimeout(loadGoogleSheetData, 500);
+        }
+    </script>
+</body>
+</html>
